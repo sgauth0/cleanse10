@@ -30,4 +30,10 @@ public record BuildOptions
     /// Only applied when <see cref="AfkInstall"/> is <c>true</c>.
     /// </summary>
     public string? AdminPassword { get; init; }
+
+    /// <summary>
+    /// Optional folder containing .inf driver files to inject into the offline image.
+    /// Null or empty = no driver injection.
+    /// </summary>
+    public string? DriverFolder { get; init; }
 }

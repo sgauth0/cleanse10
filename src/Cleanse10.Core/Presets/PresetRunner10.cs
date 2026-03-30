@@ -247,7 +247,8 @@ namespace Cleanse10.Core.Presets
         private const string PrivBootstrapScript = @"
 # Cleanse10 — 10priv first-boot privacy hardening
 # Runs once on first user login as Administrator.
-# Disables scheduled telemetry tasks and appends telemetry hosts to the system hosts file.
+# Disables scheduled telemetry tasks, blocks telemetry hosts, and stops
+# services that require a running system to stop cleanly.
 
 param()
 $ErrorActionPreference = 'Stop'
@@ -256,8 +257,28 @@ function Log { param($msg) Write-Host ""[Priv] $msg"" }
 
 Log 'Starting 10priv first-boot privacy hardening...'
 
-# ── 1. Disable telemetry / data-collection scheduled tasks ───────────────────
+# ── 1. Disable remaining services (require online session to stop) ────────────
+$svcs = @(
+    'Spooler',       # Print Spooler — disable if no printer connected
+    'Fax',           # Fax service
+    'PeerDistSvc',   # BranchCache — enterprise peer caching
+    'SessionEnv',    # Remote Desktop Configuration
+    'TermService',   # Remote Desktop Services
+    'UmRdpService'   # Remote Desktop Services UserMode Port Redirector
+)
+foreach ($svc in $svcs) {
+    try {
+        Set-Service -Name $svc -StartupType Disabled -ErrorAction Stop
+        Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+        Log ""Disabled service: $svc""
+    } catch {
+        Log ""[WARN] Could not disable service $svc : $($_.Exception.Message)""
+    }
+}
+
+# ── 2. Disable telemetry / data-collection scheduled tasks ───────────────────
 $tasks = @(
+    '\Microsoft\Windows\Application Experience\AitAgent',
     '\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser',
     '\Microsoft\Windows\Application Experience\ProgramDataUpdater',
     '\Microsoft\Windows\Application Experience\StartupAppTask',
@@ -267,15 +288,24 @@ $tasks = @(
     '\Microsoft\Windows\Autochk\Proxy',
     '\Microsoft\Windows\CloudExperienceHost\CreateObjectTask',
     '\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector',
+    '\Microsoft\Windows\DiskFootprint\Diagnostics',
     '\Microsoft\Windows\Feedback\Siuf\DmClient',
     '\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload',
     '\Microsoft\Windows\Maps\MapsToastTask',
     '\Microsoft\Windows\Maps\MapsUpdateTask',
+    '\Microsoft\Windows\Maps\MapsDownloadTask',
+    '\Microsoft\Windows\MemoryDiagnostic\MemoryDiagnosticResultsNotifier',
     '\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem',
+    '\Microsoft\Windows\Shell\CollectTelemetryData',
     '\Microsoft\Windows\Shell\FamilySafetyMonitor',
     '\Microsoft\Windows\Shell\FamilySafetyRefreshTask',
     '\Microsoft\Windows\Windows Error Reporting\QueueReporting',
     '\Microsoft\Windows\WindowsUpdate\Automatic App Update',
+    '\Microsoft\Windows\WindowsUpdate\Scheduled Start',
+    '\Microsoft\Windows\UpdateOrchestrator\Schedule Retry Scan',
+    '\Microsoft\Windows\SettingSync\BackgroundUploadTask',
+    '\Microsoft\Windows\Defrag\ScheduledDefrag',
+    '\Microsoft\Windows\FileHistory\File History (maintenance mode)',
     '\Microsoft\XblGameSave\XblGameSaveTask',
     '\Microsoft\XblGameSave\XblGameSaveTaskLogon'
 )
@@ -288,7 +318,7 @@ foreach ($task in $tasks) {
     }
 }
 
-# ── 2. Block telemetry hosts via system hosts file ────────────────────────────
+# ── 3. Block telemetry hosts via system hosts file ────────────────────────────
 Log 'Appending telemetry hosts blocklist to hosts file...'
 $hostsPath = ""$env:SystemRoot\System32\drivers\etc\hosts""
 $blocklist = @(
@@ -331,7 +361,7 @@ if ($existing -notmatch [regex]::Escape($marker)) {
     Log 'Hosts file already contains 10priv block — skipping.'
 }
 
-# ── 3. Self-delete ────────────────────────────────────────────────────────────
+# ── 4. Self-delete ────────────────────────────────────────────────────────────
 Log '10priv first-boot complete.'
 Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 ";

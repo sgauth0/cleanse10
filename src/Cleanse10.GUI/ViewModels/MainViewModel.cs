@@ -369,6 +369,7 @@ namespace Cleanse10.ViewModels
                 var runner = new PresetRunner10(MountPath, SelectedPreset!.Value)
                 {
                     UnattendedConfig = unattendedCfg,
+                    DriverFolder     = string.IsNullOrWhiteSpace(options.DriverFolder) ? null : options.DriverFolder,
                 };
 
                 await runner.RunAsync(reporter, ct);

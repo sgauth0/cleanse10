@@ -214,6 +214,62 @@ namespace Cleanse10.Core.Bloat
             // Network Data Usage Monitor — collects per-app network telemetry
             SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\ndu",
                 "Start", 4);
+
+            // Touch Keyboard and Handwriting Panel — not needed without touch screen
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\TabletInputService",
+                "Start", 4);
+
+            // Parental Controls monitoring service
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\WpcMonSvc",
+                "Start", 4);
+
+            // Windows Biometric Service — fingerprint/face recognition
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\WbioSrvc",
+                "Start", 4);
+
+            // Messaging Service — Windows SMS background service
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\MessagingService",
+                "Start", 4);
+
+            // Contact Data Indexer — indexes contacts for People/Mail; safe to remove with those apps gone
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\PimIndexMaintenanceSvc",
+                "Start", 4);
+
+            // WEP Host Service — enterprise deployment feature
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\WEPHOSTSVC",
+                "Start", 4);
+
+            // Link-Layer Topology Discovery Mapper — network map; unnecessary on a debloated image
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\lltdsvc",
+                "Start", 4);
+
+            // Infrared Monitor Service — legacy IR port
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\irmon",
+                "Start", 4);
+
+            // Smart Card reader management — disable unless using smart card auth
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\SCardSvr",
+                "Start", 4);
+
+            // Contactless payment / NFC management
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\SEMgrSvc",
+                "Start", 4);
+
+            // Portable Device Enumerator — USB phones/MP3 players; set Manual (user may plug in devices)
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\WpdUsbSvc",
+                "Start", 3);
+
+            // Phone Service — telephony and modem
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\PhoneSvc",
+                "Start", 4);
+
+            // Bluetooth — set to Manual so it starts on demand if user has BT hardware
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\bthserv",
+                "Start", 3);
+
+            // Still Image Acquisition Events — scanner/camera event monitoring
+            SetDword($@"HKLM\{HiveManager.SystemMount}\CurrentControlSet\Services\WiaRpc",
+                "Start", 4);
         }
 
         // ──────────────────────────────────────────────────────────────────────

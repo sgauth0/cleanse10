@@ -56,6 +56,13 @@ namespace Cleanse10.ViewModels
             set => SetField(ref _adminPassword, value);
         }
 
+        private string _driverFolder = string.Empty;
+        public string DriverFolder
+        {
+            get => _driverFolder;
+            set => SetField(ref _driverFolder, value);
+        }
+
         // ──────────────────────────────────────────────────────────────────────
         // Result
         // ──────────────────────────────────────────────────────────────────────
@@ -73,8 +80,9 @@ namespace Cleanse10.ViewModels
         // Commands
         // ──────────────────────────────────────────────────────────────────────
 
-        public ICommand ConfirmCommand { get; }
-        public ICommand CancelCommand  { get; }
+        public ICommand ConfirmCommand       { get; }
+        public ICommand CancelCommand        { get; }
+        public ICommand BrowseDriversCommand { get; }
 
         // ──────────────────────────────────────────────────────────────────────
         // Constructor
@@ -86,8 +94,23 @@ namespace Cleanse10.ViewModels
             PresetTagline = preset.Tagline;
             PresetIcon    = preset.Icon;
 
-            ConfirmCommand = new RelayCommand(Confirm);
-            CancelCommand  = new RelayCommand(() => RequestClose?.Invoke(false));
+            ConfirmCommand       = new RelayCommand(Confirm);
+            CancelCommand        = new RelayCommand(() => RequestClose?.Invoke(false));
+            BrowseDriversCommand = new RelayCommand(BrowseDrivers);
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // Browse driver folder
+        // ──────────────────────────────────────────────────────────────────────
+
+        private void BrowseDrivers()
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select folder containing .inf driver files",
+            };
+            if (dlg.ShowDialog() == true)
+                DriverFolder = dlg.FolderName;
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -102,6 +125,7 @@ namespace Cleanse10.ViewModels
                 AfkInstall    = AfkInstall,
                 AdminUsername = AfkInstall && !string.IsNullOrWhiteSpace(AdminUsername) ? AdminUsername.Trim() : null,
                 AdminPassword = AfkInstall ? AdminPassword : null,
+                DriverFolder  = string.IsNullOrWhiteSpace(DriverFolder) ? null : DriverFolder.Trim(),
             };
             RequestClose?.Invoke(true);
         }

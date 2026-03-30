@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Cleanse10.Core.Bloat;
 using Cleanse10.Core.Imaging;
 using Cleanse10.Core.Presets;
+using Cleanse10.Core.Unattended;
 
 namespace Cleanse10.CLI
 {
@@ -42,6 +43,10 @@ namespace Cleanse10.CLI
             var outputOpt = new Option<FileInfo?>("--output", "Output ISO path (optional)");
             var driversOpt = new Option<DirectoryInfo?>("--drivers", "Folder with .inf driver files to inject");
             var updatesOpt = new Option<DirectoryInfo?>("--updates", "Folder with .msu/.cab update packages");
+            var hostnameOpt      = new Option<string?>("--hostname",       "Computer name written into unattend.xml (omit for auto-generated)");
+            var afkOpt           = new Option<bool>   ("--afk",            () => false, "Skip OOBE and accept EULA automatically (AFK install)");
+            var adminUserOpt     = new Option<string?>("--admin-username",  "Local administrator account username (required with --afk)");
+            var adminPassOpt     = new Option<string?>("--admin-password",  "Local administrator account password (used with --afk)");
 
             runCmd.AddOption(presetOpt);
             runCmd.AddOption(wimOpt);
@@ -50,6 +55,10 @@ namespace Cleanse10.CLI
             runCmd.AddOption(outputOpt);
             runCmd.AddOption(driversOpt);
             runCmd.AddOption(updatesOpt);
+            runCmd.AddOption(hostnameOpt);
+            runCmd.AddOption(afkOpt);
+            runCmd.AddOption(adminUserOpt);
+            runCmd.AddOption(adminPassOpt);
 
             runCmd.SetHandler(async (ctx) =>
             {
@@ -60,6 +69,10 @@ namespace Cleanse10.CLI
                 FileInfo? output   = ctx.ParseResult.GetValueForOption(outputOpt);
                 DirectoryInfo? drivers = ctx.ParseResult.GetValueForOption(driversOpt);
                 DirectoryInfo? updates = ctx.ParseResult.GetValueForOption(updatesOpt);
+                string?  hostname   = ctx.ParseResult.GetValueForOption(hostnameOpt);
+                bool     afk        = ctx.ParseResult.GetValueForOption(afkOpt);
+                string?  adminUser  = ctx.ParseResult.GetValueForOption(adminUserOpt);
+                string?  adminPass  = ctx.ParseResult.GetValueForOption(adminPassOpt);
                 var ct = ctx.GetCancellationToken();
 
                 if (!ParsePreset(presetStr, out Preset10 preset))
@@ -94,10 +107,28 @@ namespace Cleanse10.CLI
 
                     // 2. Run preset
                     Console.WriteLine($"[CLI] Running preset: {presetStr}");
+
+                    // Build unattended config if requested
+                    bool needsUnattend = afk || !string.IsNullOrWhiteSpace(hostname);
+                    var unattendedCfg = needsUnattend
+                        ? new UnattendedConfig
+                        {
+                            ComputerName     = string.IsNullOrWhiteSpace(hostname) ? "*" : hostname,
+                            SkipOOBE         = afk,
+                            AcceptEula       = afk,
+                            HideEulaPage     = afk,
+                            HideWirelessPage = afk,
+                            AdminUsername    = afk ? adminUser : null,
+                            AdminPassword    = afk ? adminPass : null,
+                            WimIndex         = index,
+                        }
+                        : null;
+
                     var runner = new PresetRunner10(mountDir.FullName, preset)
                     {
-                        DriverFolder = drivers?.FullName,
-                        UpdateFolder = updates?.FullName,
+                        DriverFolder     = drivers?.FullName,
+                        UpdateFolder     = updates?.FullName,
+                        UnattendedConfig = unattendedCfg,
                     };
                     await runner.RunAsync(reporter, ct);
 
@@ -108,13 +139,20 @@ namespace Cleanse10.CLI
                     // 4. Optionally build ISO
                     if (output != null)
                     {
+                        // Walk up two levels from sources\install.wim to reach the ISO root
+                        string? wimDirPath = Path.GetDirectoryName(wimFile.FullName);
+                        string  isoSource  = (wimDirPath != null ? Path.GetDirectoryName(wimDirPath) : null)
+                                             ?? Path.GetDirectoryName(wimFile.FullName)!;
+
+                        // Inject autounattend.xml at ISO root for fully unattended install
+                        if (unattendedCfg != null)
+                        {
+                            Console.WriteLine("[CLI] Writing autounattend.xml to ISO root…");
+                            UnattendedGenerator.WriteToIsoRoot(unattendedCfg, isoSource);
+                        }
+
                         Console.WriteLine($"[CLI] Building ISO: {output.FullName}");
                         var builder = new IsoBuilder();
-                        // The WIM lives at <iso_root>\sources\install.wim — walk up two levels
-                        // to reach the ISO root directory that contains boot\, efi\, sources\, etc.
-                        string? wimDir    = Path.GetDirectoryName(wimFile.FullName);
-                        string  isoSource = (wimDir != null ? Path.GetDirectoryName(wimDir) : null)
-                                            ?? Path.GetDirectoryName(wimFile.FullName)!;
                         await builder.BuildAsync(isoSource, output.FullName, reporter, ct);
                     }
 

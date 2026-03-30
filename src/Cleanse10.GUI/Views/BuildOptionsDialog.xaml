@@ -69,6 +69,26 @@
             </StackPanel>
         </Border>
 
+        <!-- ══ Driver folder ══════════════════════════════════════════════════════ -->
+        <TextBlock Text="Driver folder (optional)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+        <Grid Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0"
+                     Text="{Binding DriverFolder, UpdateSourceTrigger=PropertyChanged}"
+                     IsReadOnly="True"
+                     Margin="0,0,8,0"/>
+            <Button Grid.Column="1"
+                    Content="Browse…"
+                    Style="{StaticResource SecondaryButton}"
+                    Command="{Binding BrowseDriversCommand}"
+                    MinWidth="80"/>
+        </Grid>
+        <TextBlock Text="Folder containing .inf files to inject into the offline image."
+                   Style="{StaticResource Caption}" Margin="0,0,0,20"/>
+
         <!-- ══ Action buttons ════════════════════════════════════════════════════ -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel"
