@@ -352,20 +352,23 @@ namespace Cleanse10.ViewModels
 
                 // Map build options → unattended config
                 var needsUnattend = options.AfkInstall || !string.IsNullOrWhiteSpace(options.Hostname);
+                var unattendedCfg = needsUnattend
+                    ? new Cleanse10.Core.Unattended.UnattendedConfig
+                    {
+                        ComputerName     = string.IsNullOrWhiteSpace(options.Hostname) ? "*" : options.Hostname,
+                        SkipOOBE         = options.AfkInstall,
+                        AcceptEula       = options.AfkInstall,
+                        HideEulaPage     = options.AfkInstall,
+                        HideWirelessPage = options.AfkInstall,
+                        AdminUsername    = options.AfkInstall ? options.AdminUsername : null,
+                        AdminPassword    = options.AfkInstall ? options.AdminPassword : null,
+                        WimIndex         = WimIndex,
+                    }
+                    : null;
+
                 var runner = new PresetRunner10(MountPath, SelectedPreset!.Value)
                 {
-                    UnattendedConfig = needsUnattend
-                        ? new Cleanse10.Core.Unattended.UnattendedConfig
-                        {
-                            ComputerName     = string.IsNullOrWhiteSpace(options.Hostname) ? "*" : options.Hostname,
-                            SkipOOBE         = options.AfkInstall,
-                            AcceptEula       = options.AfkInstall,
-                            HideEulaPage     = options.AfkInstall,
-                            HideWirelessPage = options.AfkInstall,
-                            AdminUsername    = options.AfkInstall ? options.AdminUsername : null,
-                            AdminPassword    = options.AfkInstall ? options.AdminPassword : null,
-                        }
-                        : null,
+                    UnattendedConfig = unattendedCfg,
                 };
 
                 await runner.RunAsync(reporter, ct);
@@ -377,12 +380,25 @@ namespace Cleanse10.ViewModels
 
                 if (!string.IsNullOrWhiteSpace(OutputIso))
                 {
-                    StatusText = "Building ISO…";
                     // The WIM lives at <isoRoot>\sources\install.wim — walk up two levels
                     // to reach the ISO root directory that contains boot\, efi\, sources\, etc.
                     string? wimDir    = Path.GetDirectoryName(WimPath);
                     string  isoSource = (wimDir != null ? Path.GetDirectoryName(wimDir) : null)
                                         ?? MountPath;
+
+                    // Write autounattend.xml at the ISO root for a fully unattended install.
+                    // This is separate from the Windows\Panther\unattend.xml already written
+                    // inside the WIM by PresetRunner10: autounattend.xml handles the windowsPE
+                    // pass (disk partitioning + image selection), while Panther\unattend.xml
+                    // handles specialize + oobeSystem (hostname, account, OOBE skip).
+                    if (unattendedCfg != null)
+                    {
+                        reporter.Report("[Cleanse10] Writing autounattend.xml to ISO root…");
+                        Cleanse10.Core.Unattended.UnattendedGenerator.WriteToIsoRoot(unattendedCfg, isoSource);
+                        reporter.Report($"[Cleanse10] autounattend.xml written to: {isoSource}");
+                    }
+
+                    StatusText = "Building ISO…";
                     var builder = new IsoBuilder();
                     await builder.BuildAsync(isoSource, OutputIso, reporter, ct);
                 }

@@ -22,8 +22,11 @@ namespace Cleanse10.Core.Unattended
         public bool   HideWirelessPage { get; set; } = true;
         public bool   HideLocalAccount { get; set; } = false;
 
+        // WIM image index to install (1 = first/only edition, e.g. Windows 10 Pro)
+        public int WimIndex { get; set; } = 1;
+
         // Local admin account (optional — leave null to skip)
         public string? AdminUsername { get; set; }
-        public string? AdminPassword { get; set; }   // plaintext; generator will mark plainText=false
+        public string? AdminPassword { get; set; }   // plaintext; generator will mark plainText=true
     }
 }

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 300" width="1280" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#1a0d18"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="16" cy="16" r="0.9" fill="#FF69B4" fill-opacity="0.10"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="300" fill="url(#bg)"/>
+  <rect width="1280" height="300" fill="url(#dots)"/>
+
+  <!-- Left accent bar -->
+  <rect x="0" y="0" width="4" height="300" fill="#FF69B4"/>
+
+  <!-- Logo: ISO disc rings -->
+  <circle cx="76" cy="148" r="44" fill="#FF69B4" fill-opacity="0.08" stroke="#FF69B4" stroke-width="2"/>
+  <circle cx="76" cy="148" r="24" fill="none" stroke="#FF69B4" stroke-width="0.75" stroke-opacity="0.35"/>
+  <circle cx="76" cy="148" r="7"  fill="#1a0d18" stroke="#FF69B4" stroke-width="1.5"/>
+  <!-- C10 label in disc -->
+  <text x="76" y="153" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#FF69B4" text-anchor="middle">C10</text>
+
+  <!-- Main title -->
+  <text font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="58" font-weight="700" letter-spacing="-1">
+    <tspan x="140" y="160" fill="#FFFFFF">Cleanse</tspan><tspan fill="#FF69B4">10</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="141" y="193" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11.5" font-weight="400" fill="#FF69B4" letter-spacing="2.8">
+    OFFLINE WINDOWS 10 ISO SERVICING
+  </text>
+
+  <!-- Separator -->
+  <line x1="141" y1="212" x2="600" y2="212" stroke="#FF69B4" stroke-width="0.6" stroke-opacity="0.28"/>
+
+  <!-- Sub-tagline -->
+  <text x="141" y="234" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="12" fill="#888888">
+    Debloat  ·  Privacy harden  ·  Inject drivers  ·  Integrate updates  ·  Build custom ISOs
+  </text>
+
+  <!-- Platform note -->
+  <text x="141" y="258" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="10.5" fill="#555555" letter-spacing="0.3">
+    Windows 10 22H2  ·  .NET 9  ·  win-x64  ·  Windows 11? use cleanse11
+  </text>
+
+  <!-- ── Preset cards ── -->
+
+  <!-- 10lite (x=685) -->
+  <rect x="685" y="82" width="128" height="88" rx="8" fill="#1e0d1c" stroke="#3a1a33" stroke-width="1.5"/>
+  <text x="749" y="122" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">10lite</text>
+  <text x="749" y="146" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11" fill="#666666" text-anchor="middle">Stripped clean</text>
+
+  <!-- 10claw (x=829) -->
+  <rect x="829" y="82" width="128" height="88" rx="8" fill="#1e0d1c" stroke="#3a1a33" stroke-width="1.5"/>
+  <text x="893" y="122" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">10claw</text>
+  <text x="893" y="146" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11" fill="#666666" text-anchor="middle">Dev environment</text>
+
+  <!-- 10priv (x=973) -->
+  <rect x="973" y="82" width="128" height="88" rx="8" fill="#1e0d1c" stroke="#3a1a33" stroke-width="1.5"/>
+  <text x="1037" y="122" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#FFFFFF" text-anchor="middle">10priv</text>
+  <text x="1037" y="146" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11" fill="#666666" text-anchor="middle">Privacy hardened</text>
+
+  <!-- 10nix (x=1117) — featured, pink border -->
+  <rect x="1117" y="82" width="133" height="88" rx="8" fill="#FF69B4" fill-opacity="0.10" stroke="#FF69B4" stroke-width="2"/>
+  <text x="1184" y="122" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#FF69B4" text-anchor="middle">10nix</text>
+  <text x="1184" y="146" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="11" fill="#FF69B4" fill-opacity="0.65" text-anchor="middle">Linux-like</text>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="296" width="1280" height="4" fill="#FF69B4" fill-opacity="0.55"/>
+</svg>
