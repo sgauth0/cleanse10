@@ -1,0 +1,17 @@
+<Application x:Class="Cleanse10.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:cv="clr-namespace:Cleanse10.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters declared at app level so tooltips/popups can find them -->
+            <cv:BoolToVisibilityConverter        x:Key="BoolVis"/>
+            <cv:InverseBoolToVisibilityConverter x:Key="InvBoolVis"/>
+            <cv:InverseBoolConverter             x:Key="InvBool"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

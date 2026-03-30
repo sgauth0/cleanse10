@@ -1,0 +1,16 @@
+# Build output
+bin/
+obj/
+publish/
+
+# User-specific
+*.user
+*.suo
+.vs/
+
+# Rider / JetBrains
+.idea/
+
+# OS
+Thumbs.db
+desktop.ini

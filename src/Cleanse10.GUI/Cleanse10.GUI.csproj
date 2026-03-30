@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Cleanse10</AssemblyName>
+    <RootNamespace>Cleanse10</RootNamespace>
+    <Product>Cleanse10</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Bundle the runtime so no .NET installation is required on the target machine -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <!-- Single-file publish: dotnet publish collapses everything into one .exe -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- Trim unused code to keep the output smaller -->
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cleanse10.Core\Cleanse10.Core.csproj" />
+  </ItemGroup>
+</Project>
