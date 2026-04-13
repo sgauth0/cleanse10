@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 
 namespace Cleanse10.Views
 {
@@ -14,6 +15,19 @@ namespace Cleanse10.Views
 
             // RequestClose fires on a task thread — marshal to UI thread
             ViewModel.RequestClose += () => Dispatcher.Invoke(Close);
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+                return;
+
+            DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
