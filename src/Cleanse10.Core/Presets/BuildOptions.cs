@@ -36,4 +36,16 @@ public record BuildOptions
     /// Null or empty = no driver injection.
     /// </summary>
     public string? DriverFolder { get; init; }
+
+    /// <summary>
+    /// Optional folder containing Windows update packages (.msu / .cab) to integrate.
+    /// Null or empty = no update integration.
+    /// </summary>
+    public string? UpdateFolder { get; init; }
+
+    /// <summary>
+    /// Full path for the output ISO file to build.
+    /// Null or empty = skip ISO generation.
+    /// </summary>
+    public string? OutputIso { get; init; }
 }

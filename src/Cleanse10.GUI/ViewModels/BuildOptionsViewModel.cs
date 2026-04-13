@@ -63,6 +63,20 @@ namespace Cleanse10.ViewModels
             set => SetField(ref _driverFolder, value);
         }
 
+        private string _updateFolder = string.Empty;
+        public string UpdateFolder
+        {
+            get => _updateFolder;
+            set => SetField(ref _updateFolder, value);
+        }
+
+        private string _outputIso = string.Empty;
+        public string OutputIso
+        {
+            get => _outputIso;
+            set => SetField(ref _outputIso, value);
+        }
+
         // ──────────────────────────────────────────────────────────────────────
         // Result
         // ──────────────────────────────────────────────────────────────────────
@@ -83,20 +97,26 @@ namespace Cleanse10.ViewModels
         public ICommand ConfirmCommand       { get; }
         public ICommand CancelCommand        { get; }
         public ICommand BrowseDriversCommand { get; }
+        public ICommand BrowseUpdatesCommand { get; }
+        public ICommand BrowseOutputCommand  { get; }
 
         // ──────────────────────────────────────────────────────────────────────
         // Constructor
         // ──────────────────────────────────────────────────────────────────────
 
-        public BuildOptionsViewModel(PresetDefinition preset)
+        public BuildOptionsViewModel(PresetDefinition preset, string lastOutputPath = "")
         {
             PresetName    = preset.Name;
             PresetTagline = preset.Tagline;
             PresetIcon    = preset.Icon;
 
+            _outputIso = lastOutputPath;
+
             ConfirmCommand       = new RelayCommand(Confirm);
             CancelCommand        = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseDriversCommand = new RelayCommand(BrowseDrivers);
+            BrowseUpdatesCommand = new RelayCommand(BrowseUpdates);
+            BrowseOutputCommand  = new RelayCommand(BrowseOutput);
         }
 
         // ──────────────────────────────────────────────────────────────────────
@@ -113,6 +133,29 @@ namespace Cleanse10.ViewModels
                 DriverFolder = dlg.FolderName;
         }
 
+        private void BrowseUpdates()
+        {
+            var dlg = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select folder containing Windows update packages (.msu / .cab)",
+            };
+            if (dlg.ShowDialog() == true)
+                UpdateFolder = dlg.FolderName;
+        }
+
+        private void BrowseOutput()
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title    = "Save rebuilt ISO as…",
+                Filter   = "ISO image|*.iso",
+                FileName = string.IsNullOrWhiteSpace(OutputIso) ? "cleanse10.iso" : System.IO.Path.GetFileName(OutputIso),
+                InitialDirectory = string.IsNullOrWhiteSpace(OutputIso) ? string.Empty : (System.IO.Path.GetDirectoryName(OutputIso) ?? string.Empty),
+            };
+            if (dlg.ShowDialog() == true)
+                OutputIso = dlg.FileName;
+        }
+
         // ──────────────────────────────────────────────────────────────────────
         // Confirm
         // ──────────────────────────────────────────────────────────────────────
@@ -126,6 +169,8 @@ namespace Cleanse10.ViewModels
                 AdminUsername = AfkInstall && !string.IsNullOrWhiteSpace(AdminUsername) ? AdminUsername.Trim() : null,
                 AdminPassword = AfkInstall ? AdminPassword : null,
                 DriverFolder  = string.IsNullOrWhiteSpace(DriverFolder) ? null : DriverFolder.Trim(),
+                UpdateFolder  = string.IsNullOrWhiteSpace(UpdateFolder) ? null : UpdateFolder.Trim(),
+                OutputIso     = string.IsNullOrWhiteSpace(OutputIso) ? null : OutputIso.Trim(),
             };
             RequestClose?.Invoke(true);
         }

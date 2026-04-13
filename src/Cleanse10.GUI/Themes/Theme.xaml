@@ -187,7 +187,7 @@
         <Setter Property="BorderBrush"      Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness"  Value="1.5"/>
         <Setter Property="Padding"          Value="0"/>
-        <Setter Property="HasDropShadow"    Value="True"/>
+        <Setter Property="HasDropShadow"    Value="False"/>
         <Setter Property="MaxWidth"         Value="310"/>
         <Setter Property="Placement"        Value="Right"/>
     </Style>

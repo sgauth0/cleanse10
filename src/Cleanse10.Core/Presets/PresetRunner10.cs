@@ -446,6 +446,26 @@ if (-not (Test-Path $wslConfigPath)) {
     Log '.wslconfig already exists — skipping.'
 }
 
+# Write /etc/wsl.conf inside the distro: enable systemd, clean up Windows PATH.
+# This is Section 2.3.1 of the guide — marked Critical.
+Log 'Writing /etc/wsl.conf inside Ubuntu 24.04 (systemd + PATH isolation)...'
+$wslConf = @'
+[boot]
+systemd=true
+[interop]
+appendWindowsPath=false
+[automount]
+enabled=true
+root=/mnt/
+options=metadata,umask=22,fmask=11
+'@
+try {
+    $wslConf | wsl --distribution Ubuntu-24.04 --exec bash -c 'sudo tee /etc/wsl.conf > /dev/null'
+    Log '/etc/wsl.conf written — WSL2 will use systemd on next launch.'
+} catch {
+    Log ""[WARN] Could not write /etc/wsl.conf: $($_.Exception.Message)""
+}
+
 # ── 3. High Performance power plan ───────────────────────────────────────────
 Log 'Activating High Performance power plan...'
 $hp = powercfg /list | Select-String 'High performance'
@@ -472,8 +492,8 @@ if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
     Log 'scoop already present.'
 }
 
-# Add scoop buckets
-foreach ($bucket in @('extras', 'nerd-fonts')) {
+# Add scoop buckets (extras, versions, nerd-fonts per spec §7.2)
+foreach ($bucket in @('extras', 'versions', 'nerd-fonts')) {
     scoop bucket add $bucket 2>$null
 }
 
@@ -485,10 +505,13 @@ $wingetApps = @(
     'wez.wezterm',
     'Mozilla.Firefox',
     'VideoLAN.VLC',
+    'LibreOffice.LibreOffice',
+    'GIMP.GIMP',
     'Obsidian.Obsidian',
     'Notepad++.Notepad++',
     'Starship.Starship',
     'Microsoft.PowerToys',
+    'AutoHotkey.AutoHotkey',
     'Git.Git',
     'File-New-Project.EarTrumpet'
 )
@@ -499,7 +522,7 @@ foreach ($app in $wingetApps) {
 
 # ── 7. Install CLI tools + Nerd Fonts via scoop ───────────────────────────────
 Log 'Installing CLI tools via scoop...'
-$scoopTools = @('neovim', 'ripgrep', 'fd', 'fzf', 'bat', 'eza', 'zoxide', 'jq', 'lazygit', 'tldr', 'ncdu')
+$scoopTools = @('neovim', 'tmux', 'ranger', 'ripgrep', 'fd', 'fzf', 'bat', 'eza', 'zoxide', 'jq', 'lazygit', 'tldr', 'ncdu')
 foreach ($tool in $scoopTools) {
     scoop install $tool 2>$null
 }

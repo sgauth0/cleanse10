@@ -17,11 +17,22 @@ namespace Cleanse10
 
             DispatcherUnhandledException += (_, ex) =>
             {
+                // Known WPF internal bug: Popup.CreateRootPopupInternal creates a
+                // two-way binding without a Path when opening ToolTip popups.
+                // Nothing we can do about it — just swallow and move on.
+                string msg = ex.Exception.Message;
+                if (msg.Contains("Two-way binding requires Path", StringComparison.Ordinal)
+                    || msg.Contains("TwoWay or OneWayToSource binding cannot work on the read-only property", StringComparison.Ordinal))
+                {
+                    ex.Handled = true;
+                    return;
+                }
+
                 WriteCrashLog("Dispatcher", ex.Exception);
                 ex.Handled = true;   // prevent silent exit; show message instead
                 MessageBox.Show(
                     ex.Exception.Message,
-                    "Cleanse10 — Startup Error",
+                    "Cleanse10 — Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             };
@@ -43,6 +54,11 @@ namespace Cleanse10
                     MessageBoxImage.Error);
                 Shutdown(1);
             }
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            base.OnExit(e);
         }
 
         private static void WriteCrashLog(string source, Exception? ex)

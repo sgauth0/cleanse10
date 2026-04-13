@@ -98,9 +98,6 @@ namespace Cleanse10.Core.Unattended
                 // Disk configuration: wipe disk 0, create GPT layout with ESP + MSR + Windows partition
                 WriteComponent(xw, "Microsoft-Windows-Setup", () =>
                 {
-                    if (cfg.AcceptEula)
-                        Leaf(xw, "AcceptEula", "true");
-
                     Elem(xw, "DiskConfiguration", () =>
                     {
                         // WillShowUI: OnError ensures setup only blocks on actual errors.

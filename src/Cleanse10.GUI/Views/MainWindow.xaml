@@ -15,7 +15,8 @@
     <Grid Margin="24,18,24,18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- Header -->
-            <RowDefinition Height="Auto"/>   <!-- WIM / Mount row -->
+            <RowDefinition Height="Auto"/>   <!-- Image file input -->
+            <RowDefinition Height="Auto"/>   <!-- Edition picker (shown only when WIM has multiple editions) -->
             <RowDefinition Height="Auto"/>   <!-- Preset cards -->
             <RowDefinition Height="Auto"/>   <!-- Action buttons -->
             <RowDefinition Height="Auto"/>   <!-- Status / progress -->
@@ -29,69 +30,56 @@
                        Style="{StaticResource Caption}" FontSize="12"/>
         </StackPanel>
 
-        <!-- ══ WIM + Mount paths ══════════════════════════════════════════════ -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- ══ Image file input ═══════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="Image file (ISO · WIM · ESD)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{Binding WimPath, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                <Button Grid.Column="1" Margin="6,0,0,0"
+                        Content="Browse…"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding BrowseImageCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                <Button Grid.Column="2" Margin="6,0,0,0"
+                        Content="Get ISO…"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding GetIsoCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                        ToolTip="Download Windows 10 22H2 Pro ISO directly from Microsoft"/>
+            </Grid>
+        </StackPanel>
 
-            <!-- WIM path -->
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="WIM / ESD file" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0"
-                             Text="{Binding WimPath, UpdateSourceTrigger=PropertyChanged}"
-                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="1" Margin="6,0,0,0"
-                            Content="Browse…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseWimCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="2" Margin="6,0,0,0"
-                            Content="Open ISO…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseIsoCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            ToolTip="Mount a local ISO and extract install.wim automatically"/>
-                    <Button Grid.Column="3" Margin="6,0,0,0"
-                            Content="Get ISO…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding GetIsoCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            ToolTip="Download Windows 10 22H2 Pro ISO directly from Microsoft"/>
-                </Grid>
-            </StackPanel>
-
-            <!-- Mount path -->
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="Mount folder (empty)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0"
-                             Text="{Binding MountPath, UpdateSourceTrigger=PropertyChanged}"
-                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="1" Margin="6,0,0,0"
-                            Content="Browse…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseMountCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                </Grid>
-            </StackPanel>
-        </Grid>
+        <!-- ══ Edition picker (visible only when WIM has multiple editions) ══════ -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,14"
+                    Visibility="{Binding HasMultipleEditions, Converter={StaticResource BoolVis}}">
+            <TextBlock Text="Windows edition" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+            <ComboBox ItemsSource="{Binding AvailableEditions}"
+                      SelectedItem="{Binding SelectedEdition, Mode=TwoWay}"
+                      IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                      MinWidth="320" HorizontalAlignment="Left">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Index}" FontWeight="SemiBold" Margin="0,0,8,0"
+                                       Foreground="{StaticResource AccentBrush}"/>
+                            <TextBlock Text="{Binding Name}"/>
+                            <TextBlock Text=" — " Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding SizeFormatted}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
 
         <!-- ══ Preset cards ══════════════════════════════════════════════════ -->
-        <ItemsControl Grid.Row="2" Margin="0,0,0,16" ItemsSource="{Binding Presets}">
+        <ItemsControl Grid.Row="3" Margin="0,0,0,16" ItemsSource="{Binding Presets}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <UniformGrid Columns="4"/>
@@ -190,8 +178,8 @@
             </ItemsControl>
 
         <!-- ══ Action buttons ════════════════════════════════════════════════ -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12">
-            <Button Content="Start Build"
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="Create ISO"
                     Style="{StaticResource PrimaryButton}"
                     Command="{Binding RunCommand}"
                     MinWidth="120" Margin="0,0,10,0"/>
@@ -203,7 +191,7 @@
         </StackPanel>
 
         <!-- ══ Status + progress ═════════════════════════════════════════════ -->
-        <StackPanel Grid.Row="4" Margin="0,0,0,8">
+        <StackPanel Grid.Row="5" Margin="0,0,0,8">
             <TextBlock Text="{Binding StatusText}"
                        FontSize="12"
                        Foreground="{StaticResource TextSecondaryBrush}"
@@ -214,7 +202,7 @@
         </StackPanel>
 
         <!-- ══ Log output ════════════════════════════════════════════════════ -->
-        <TextBox Grid.Row="5"
+        <TextBox Grid.Row="6"
                  Style="{StaticResource LogBox}"
                  Text="{Binding Log, Mode=OneWay}"
                  VerticalScrollBarVisibility="Auto"

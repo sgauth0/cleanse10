@@ -77,8 +77,19 @@ namespace Cleanse10.Core.Tweaks
                     string resolvedKey = ResolveKey(t.Key, softwareMount, systemMount);
                     progress?.Report($"[Tweaks] {resolvedKey}\\{t.ValueName} = {t.Value}");
 
-                    using var key = Registry.LocalMachine.CreateSubKey(resolvedKey, writable: true);
-                    key?.SetValue(t.ValueName, t.Value, t.Kind);
+                    try
+                    {
+                        using var key = Registry.LocalMachine.CreateSubKey(resolvedKey, writable: true);
+                        key?.SetValue(t.ValueName, t.Value, t.Kind);
+                    }
+                    catch (System.Security.SecurityException ex)
+                    {
+                        progress?.Report($"[WARN] [Tweaks] SecurityException writing {t.ValueName}: {ex.Message} — skipping.");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        progress?.Report($"[WARN] [Tweaks] UnauthorizedAccessException writing {t.ValueName}: {ex.Message} — skipping.");
+                    }
                 }
             }
             finally
@@ -139,8 +150,21 @@ namespace Cleanse10.Core.Tweaks
                     string subKey = $@"{mountPoint}\{t.Key.TrimStart('\\')}";
                     progress?.Report($"[Tweaks][DefaultUser] {t.Key}\\{t.ValueName} = {t.Value}");
 
-                    using var key = Registry.LocalMachine.CreateSubKey(subKey, writable: true);
-                    key?.SetValue(t.ValueName, t.Value, t.Kind);
+                    try
+                    {
+                        using var key = Registry.LocalMachine.CreateSubKey(subKey, writable: true);
+                        key?.SetValue(t.ValueName, t.Value, t.Kind);
+                    }
+                    catch (System.Security.SecurityException ex)
+                    {
+                        // Some keys may have restrictive ACLs after a prior hive mount
+                        // under a different name wrote to them. Log and continue.
+                        progress?.Report($"[WARN] [Tweaks][DefaultUser] SecurityException writing {t.ValueName}: {ex.Message} — skipping.");
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        progress?.Report($"[WARN] [Tweaks][DefaultUser] UnauthorizedAccessException writing {t.ValueName}: {ex.Message} — skipping.");
+                    }
                 }
             }
             finally

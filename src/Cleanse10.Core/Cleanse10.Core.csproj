@@ -6,4 +6,7 @@
     <AssemblyName>Cleanse10.Core</AssemblyName>
     <RootNamespace>Cleanse10.Core</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LTRData.DiscUtils.Udf" Version="1.0.77" />
+  </ItemGroup>
 </Project>

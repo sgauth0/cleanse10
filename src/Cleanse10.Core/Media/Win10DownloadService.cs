@@ -29,7 +29,6 @@ namespace Cleanse10.Core.Media
     /// <summary>
     /// Downloads an official Windows 10 22H2 ISO from Microsoft using the Fido PowerShell
     /// script (github.com/pbatard/Fido) — the same technique used by Rufus.
-    /// Also handles mounting the ISO and extracting install.wim.
     /// </summary>
     public static class Win10DownloadService
     {
@@ -150,103 +149,6 @@ namespace Cleanse10.Core.Media
             log.Report($"[Cleanse10] Download complete → {outputPath}");
         }
 
-        // ── Extract install.wim from ISO ───────────────────────────────────────
-
-        public static async Task<string> ExtractInstallWimAsync(
-            string isoPath,
-            string outputFolder,
-            IProgress<string> log,
-            IProgress<(long copied, long total)> byteProgress,
-            CancellationToken ct)
-        {
-            log.Report("[Cleanse10] Mounting ISO…");
-            Directory.CreateDirectory(outputFolder);
-
-            string safeIso = isoPath.Replace("'", "''");
-
-            string mountScript =
-                $"$img = Mount-DiskImage -ImagePath '{safeIso}' -PassThru\n" +
-                "$vol = $img | Get-Volume\n" +
-                "Write-Output $vol.DriveLetter";
-
-            string driveLetter = (await RunInlinePsAsync(mountScript, ct)).Trim();
-
-            if (string.IsNullOrWhiteSpace(driveLetter) || driveLetter.Length != 1)
-                throw new InvalidOperationException(
-                    $"Could not determine ISO mount drive letter (got: '{driveLetter}').");
-
-            // Prefer install.wim; fall back to install.esd (common on Microsoft-distributed ISOs).
-            string wimSrc;
-            string destFileName;
-            string wimCandidate = $@"{driveLetter}:\sources\install.wim";
-            string esdCandidate = $@"{driveLetter}:\sources\install.esd";
-            if (File.Exists(wimCandidate))
-            {
-                wimSrc      = wimCandidate;
-                destFileName = "install.wim";
-            }
-            else if (File.Exists(esdCandidate))
-            {
-                wimSrc      = esdCandidate;
-                destFileName = "install.esd";
-            }
-            else
-            {
-                throw new FileNotFoundException(
-                    $"Neither install.wim nor install.esd found in mounted ISO at {driveLetter}:\\sources\\");
-            }
-
-            string wimDest = Path.Combine(outputFolder, destFileName);
-
-            try
-            {
-                long totalBytes = new FileInfo(wimSrc).Length;
-                log.Report($"[Cleanse10] Copying {destFileName} ({totalBytes / 1_048_576} MB)…");
-
-                // Virtual ISO drives (Mount-DiskImage) do not support overlapped I/O.
-                // FileStream with useAsync:false → FileOptions.None (no FILE_FLAG_OVERLAPPED),
-                // which avoids ERROR_INVALID_FUNCTION on virtual DVD drives.
-                await Task.Run(() =>
-                {
-                    using var src2 = new FileStream(wimSrc,  FileMode.Open,   FileAccess.Read,
-                                                    FileShare.Read,  1 << 16, useAsync: false);
-                    using var dst2 = new FileStream(wimDest, FileMode.Create, FileAccess.Write,
-                                                    FileShare.None,  1 << 16, useAsync: false);
-                    var  buffer = new byte[1 << 16];
-                    long copied = 0;
-                    long total  = src2.Length;
-                    int  read;
-                    while ((read = src2.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        dst2.Write(buffer, 0, read);
-                        copied += read;
-                        byteProgress.Report((copied, total));
-                    }
-                }, CancellationToken.None); // ct checked inside loop; don't cancel the Task itself
-
-                if (ct.IsCancellationRequested)
-                {
-                    try { File.Delete(wimDest); } catch { /* best effort */ }
-                    throw new OperationCanceledException(ct);
-                }
-            }
-            finally
-            {
-                log.Report("[Cleanse10] Unmounting ISO…");
-                try
-                {
-                    await RunInlinePsAsync(
-                        $"Dismount-DiskImage -ImagePath '{safeIso}'",
-                        CancellationToken.None);
-                }
-                catch { /* best effort */ }
-            }
-
-            log.Report($"[Cleanse10] Extracted → {wimDest}");
-            return wimDest;
-        }
-
         // ── PowerShell helpers ─────────────────────────────────────────────────
 
         private static async Task<string> RunPs1Async(string ps1Path, CancellationToken ct)
@@ -262,8 +164,8 @@ namespace Cleanse10.Core.Media
             };
 
             using var proc = Process.Start(psi)!;
-            // Read stdout and wait for exit concurrently so neither can deadlock the other.
             var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = proc.StandardError.ReadToEndAsync(ct);
             try
             {
                 await proc.WaitForExitAsync(ct);
@@ -274,22 +176,14 @@ namespace Cleanse10.Core.Media
                     try { proc.Kill(); } catch { /* best effort */ }
                 throw;
             }
-            return await stdoutTask;
-        }
 
-        private static async Task<string> RunInlinePsAsync(string script, CancellationToken ct)
-        {
-            string temp = Path.Combine(Path.GetTempPath(),
-                                        $"cleanse10_ps_{Guid.NewGuid():N}.ps1");
-            try
-            {
-                await File.WriteAllTextAsync(temp, script, ct);
-                return await RunPs1Async(temp, ct);
-            }
-            finally
-            {
-                try { File.Delete(temp); } catch { /* best effort */ }
-            }
+            string stdout = await stdoutTask;
+            string stderr = await stderrTask;
+            if (proc.ExitCode != 0)
+                throw new InvalidOperationException(
+                    $"PowerShell failed with exit code {proc.ExitCode}.\n{stderr}{stdout}");
+
+            return stdout;
         }
 
     }

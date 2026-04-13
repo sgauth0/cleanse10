@@ -81,7 +81,7 @@ namespace Cleanse10.ViewModels
             private set => SetField(ref _downloadedIsoPath, value);
         }
 
-        /// <summary>Populated when extraction succeeds; read by the caller after the window closes.</summary>
+        /// <summary>Populated when the ISO is ready to use; read by the caller after the window closes.</summary>
         public string? ResultWimPath { get; private set; }
 
         // ── Commands ───────────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ namespace Cleanse10.ViewModels
             }
         }
 
-        // ── Extract ────────────────────────────────────────────────────────────
+        // ── Use Downloaded ISO ─────────────────────────────────────────────────
 
         private async Task ExtractWimAsync()
         {
@@ -178,30 +178,17 @@ namespace Cleanse10.ViewModels
             _cts            = new CancellationTokenSource();
             var ct          = _cts.Token;
 
-            IProgress<string> log = new Progress<string>(msg => StatusText = msg);
-
-            IProgress<(long copied, long total)> byteProgress =
-                new Progress<(long copied, long total)>(t =>
-                {
-                    if (t.total > 0)
-                        ProgressPercent = t.copied * 100.0 / t.total;
-                    UpdateSpeedText(t.copied, t.total);
-                });
-
             try
             {
-                string extractFolder = Path.GetDirectoryName(DownloadedIsoPath)!;
-                string wimPath = await Win10DownloadService.ExtractInstallWimAsync(
-                    DownloadedIsoPath, extractFolder, log, byteProgress, ct);
-
-                ResultWimPath   = wimPath;
+                await Task.Yield();
+                ResultWimPath   = DownloadedIsoPath;
                 ProgressPercent = 100;
-                StatusText      = $"Done → {wimPath}";
+                StatusText      = $"ISO ready → {DownloadedIsoPath}";
                 RequestClose?.Invoke();
             }
             catch (OperationCanceledException)
             {
-                StatusText      = "Extraction cancelled.";
+                StatusText      = "Selection cancelled.";
                 SpeedText       = string.Empty;
                 ProgressPercent = 0;
             }

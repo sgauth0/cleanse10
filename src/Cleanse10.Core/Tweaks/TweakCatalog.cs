@@ -146,14 +146,13 @@ namespace Cleanse10.Core.Tweaks
             new(@"SOFTWARE\Policies\Microsoft\Windows\Windows Feeds", "EnableFeeds",          0, RegistryValueKind.DWord, TweakHive.LocalMachine, TagUX, "Disable News and Interests taskbar widget (policy)"),
             new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Feeds", "ShellFeedsTaskbarViewMode", 2, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Hide News and Interests from taskbar"),
 
-            new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 0, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Show file extensions"),
-            new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden",      1, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Show hidden files"),
-            new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "LaunchTo",    1, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Open Explorer to This PC"),
-            new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications", 0, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Hide OneDrive sync notifications"),
-            new(@"Control Panel\Desktop", "MenuShowDelay",                                    "0", RegistryValueKind.String, TweakHive.DefaultUser, TagUX, "Remove menu delay"),
-            new(@"Control Panel\Desktop", "AutoEndTasks",                                    "1", RegistryValueKind.String, TweakHive.DefaultUser, TagPerformance, "Auto-end unresponsive tasks"),
-            new(@"Control Panel\Desktop", "WaitToKillAppTimeout",                            "2000", RegistryValueKind.String, TweakHive.DefaultUser, TagPerformance),
-            new(@"Control Panel\Desktop", "HungAppTimeout",                                  "2000", RegistryValueKind.String, TweakHive.DefaultUser, TagPerformance),
+            // NOTE: HideFileExt, Hidden, LaunchTo, ShowSyncProviderNotifications,
+            // MenuShowDelay, AutoEndTasks, WaitToKillAppTimeout, HungAppTimeout are
+            // intentionally NOT listed here — they are already applied by
+            // OfflineTweaks10.ApplyUXTweaks() under CLEANSE10_OFFLINE_NTUSER.
+            // Duplicating them here caused a SecurityException when TweakApplicator
+            // tried to re-write them under CLEANSE10_DEFUSER (different mount name,
+            // same underlying NTUSER.DAT file).
             // Disable Start menu recently used program and document tracking
             new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoRecentDocsMenu",  1, RegistryValueKind.DWord, TweakHive.LocalMachine, TagUX, "Disable recent docs in Start menu"),
             new(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Start_TrackProgs",  0, RegistryValueKind.DWord, TweakHive.DefaultUser, TagUX, "Disable Start menu program tracking"),
