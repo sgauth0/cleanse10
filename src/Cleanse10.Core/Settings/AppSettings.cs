@@ -16,6 +16,7 @@ namespace Cleanse10.Core.Settings
         public string LastOutputPath   { get; set; } = string.Empty;
         public string LastDriverFolder { get; set; } = string.Empty;
         public string LastUpdateFolder { get; set; } = string.Empty;
+        public string TempMountRoot    { get; set; } = string.Empty;
         public bool   DarkMode         { get; set; } = false;
 
         // ──────────────────────────────────────────────────────────────────────

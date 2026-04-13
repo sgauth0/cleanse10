@@ -2,222 +2,337 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Cleanse10.ViewModels"
-        xmlns:cv="clr-namespace:Cleanse10.Converters"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Cleanse10"
-        Width="860" Height="680"
-        MinWidth="720" MinHeight="560"
+        Width="920" Height="720"
+        MinWidth="780" MinHeight="620"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        WindowStyle="None"
+        Background="Transparent">
 
-    <Window.Resources>
-    </Window.Resources>
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
-    <Grid Margin="24,18,24,18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>   <!-- Header -->
-            <RowDefinition Height="Auto"/>   <!-- WIM / Mount row -->
-            <RowDefinition Height="Auto"/>   <!-- Preset cards -->
-            <RowDefinition Height="Auto"/>   <!-- Action buttons -->
-            <RowDefinition Height="Auto"/>   <!-- Status / progress -->
-            <RowDefinition Height="*"/>      <!-- Log -->
-        </Grid.RowDefinitions>
+    <Border Background="{StaticResource BackgroundBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <!-- ══ Header ══════════════════════════════════════════════════════════ -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,18">
-            <TextBlock Text="Cleanse10" Style="{StaticResource H1}" FontSize="26"/>
-            <TextBlock Text="Windows 10 image customization — pick a preset and run."
-                       Style="{StaticResource Caption}" FontSize="12"/>
-        </StackPanel>
-
-        <!-- ══ WIM + Mount paths ══════════════════════════════════════════════ -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- WIM path -->
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="WIM / ESD file" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-                <Grid>
+            <Border Grid.Row="0"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Height="46">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0"
-                             Text="{Binding WimPath, UpdateSourceTrigger=PropertyChanged}"
-                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="1" Margin="6,0,0,0"
-                            Content="Browse…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseWimCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="2" Margin="6,0,0,0"
-                            Content="Open ISO…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseIsoCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            ToolTip="Mount a local ISO and extract install.wim automatically"/>
-                    <Button Grid.Column="3" Margin="6,0,0,0"
-                            Content="Get ISO…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding GetIsoCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
-                            ToolTip="Download Windows 10 22H2 Pro ISO directly from Microsoft"/>
-                </Grid>
-            </StackPanel>
-
-            <!-- Mount path -->
-            <StackPanel Grid.Column="2">
-                <TextBlock Text="Mount folder (empty)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0"
-                             Text="{Binding MountPath, UpdateSourceTrigger=PropertyChanged}"
-                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
-                    <Button Grid.Column="1" Margin="6,0,0,0"
-                            Content="Browse…"
-                            Style="{StaticResource SecondaryButton}"
-                            Command="{Binding BrowseMountCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Cleanse10"
+                                   Style="{StaticResource H2}"
+                                   FontSize="15"
+                                   Margin="0"/>
+                        <TextBlock Text="Windows 10 image customization"
+                                   Style="{StaticResource Caption}"
+                                   Margin="10,2,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Width="44"
+                            Height="46"
+                            Content="&#xE713;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Style="{StaticResource TitleBarButton}"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip="Settings"/>
+
+                    <Button Grid.Column="2"
+                            Width="44"
+                            Height="46"
+                            Content="&#xE921;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Style="{StaticResource TitleBarButton}"
+                            Click="MinimizeButton_Click"/>
+
+                    <Button Grid.Column="3"
+                            Width="44"
+                            Height="46"
+                            Content="&#xE922;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Style="{StaticResource TitleBarButton}"
+                            Click="MaximizeRestoreButton_Click"/>
+
+                    <Button Grid.Column="4"
+                            Width="44"
+                            Height="46"
+                            Content="&#xE711;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Style="{StaticResource TitleBarCloseButton}"
+                            Click="CloseButton_Click"/>
                 </Grid>
-            </StackPanel>
-        </Grid>
+            </Border>
 
-        <!-- ══ Preset cards ══════════════════════════════════════════════════ -->
-        <ItemsControl Grid.Row="2" Margin="0,0,0,16" ItemsSource="{Binding Presets}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="4"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type vm:PresetCardViewModel}">
-                    <Border Margin="0,0,10,0"
-                            Padding="14,12"
-                            CornerRadius="6"
-                            Cursor="Hand">
-                        <Border.ToolTip>
-                            <ToolTip Style="{StaticResource PresetTooltip}">
-                                <StackPanel Margin="14,12">
-                                    <!-- Header -->
-                                    <TextBlock Text="{Binding Definition.Name}"
-                                               FontWeight="SemiBold" FontSize="13"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding Definition.Description}"
-                                               FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap"
-                                               Margin="0,0,0,10"/>
+            <Grid Grid.Row="1" Margin="24,18,24,18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                                    <!-- Removes section -->
-                                    <TextBlock Text="REMOVES"
-                                               FontSize="10" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               Margin="0,0,0,4"/>
-                                    <ItemsControl ItemsSource="{Binding Definition.Removes}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock FontSize="11" Margin="0,1"
-                                                           Foreground="{StaticResource TextPrimaryBrush}">
-                                                    <Run Text="&#x2212;&#x2002;" Foreground="#E05090"/>
-                                                     <Run Text="{Binding Mode=OneWay}"/>
-                                                 </TextBlock>
-                                             </DataTemplate>
-                                         </ItemsControl.ItemTemplate>
-                                     </ItemsControl>
+                <StackPanel Grid.Row="0" Margin="0,0,0,18">
+                    <TextBlock Text="Build a tailored Windows 10 image"
+                               Style="{StaticResource H1}"
+                               FontSize="26"/>
+                    <TextBlock Text="Pick a source image, choose a preset, and Cleanse10 handles the temporary mount workspace for you."
+                               Style="{StaticResource Caption}"
+                               FontSize="12"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
 
-                                     <!-- Adds section (hidden when empty) -->
-                                     <StackPanel Visibility="{Binding HasAdds,
-                                                     Converter={StaticResource BoolVis}}"
-                                                 Margin="0,10,0,0">
-                                         <TextBlock Text="ADDS / ENABLES"
-                                                    FontSize="10" FontWeight="SemiBold"
-                                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                                    Margin="0,0,0,4"/>
-                                         <ItemsControl ItemsSource="{Binding Definition.Adds}">
-                                             <ItemsControl.ItemTemplate>
-                                                 <DataTemplate>
-                                                     <TextBlock FontSize="11" Margin="0,1"
-                                                                Foreground="{StaticResource TextPrimaryBrush}">
-                                                         <Run Text="&#x002B;&#x2002;" Foreground="#4CAF50"/>
-                                                         <Run Text="{Binding Mode=OneWay}"/>
-                                                    </TextBlock>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="WIM / ESD file" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding WimPath, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                            <Button Grid.Column="1" Margin="6,0,0,0"
+                                    Content="Browse..."
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding BrowseWimCommand}"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"/>
+                            <Button Grid.Column="2" Margin="6,0,0,0"
+                                    Content="Open ISO..."
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding BrowseIsoCommand}"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                    ToolTip="Mount a local ISO and extract install.wim automatically"/>
+                            <Button Grid.Column="3" Margin="6,0,0,0"
+                                    Content="Get ISO..."
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding GetIsoCommand}"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvBool}}"
+                                    ToolTip="Download Windows 10 22H2 Pro ISO directly from Microsoft"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Temporary mount workspace" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding MountPath}"
+                                 IsReadOnly="True"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock Text="Each build gets its own fresh mount folder here. Change it from the gear button in the title bar."
+                                   Style="{StaticResource Caption}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+
+                <ItemsControl Grid.Row="2" Margin="0,0,0,16" ItemsSource="{Binding Presets}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PresetCardViewModel}">
+                            <Border Margin="0,0,10,0"
+                                    Padding="14,12"
+                                    CornerRadius="6"
+                                    Cursor="Hand">
+                                <Border.ToolTip>
+                                    <ToolTip Style="{StaticResource PresetTooltip}">
+                                        <StackPanel Margin="14,12">
+                                            <TextBlock Text="{Binding Definition.Name}"
+                                                       FontWeight="SemiBold" FontSize="13"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding Definition.Description}"
+                                                       FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,0,0,10"/>
+
+                                            <TextBlock Text="REMOVES"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Margin="0,0,0,4"/>
+                                            <ItemsControl ItemsSource="{Binding Definition.Removes}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock FontSize="11" Margin="0,1"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}">
+                                                            <Run Text="&#x2212;&#x2002;" Foreground="#E05090"/>
+                                                            <Run Text="{Binding Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <StackPanel Visibility="{Binding HasAdds, Converter={StaticResource BoolVis}}"
+                                                        Margin="0,10,0,0">
+                                                <TextBlock Text="ADDS / ENABLES"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Margin="0,0,0,4"/>
+                                                <ItemsControl ItemsSource="{Binding Definition.Adds}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock FontSize="11" Margin="0,1"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}">
+                                                                <Run Text="&#x002B;&#x2002;" Foreground="#4CAF50"/>
+                                                                <Run Text="{Binding Mode=OneWay}"/>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </ToolTip>
+                                </Border.ToolTip>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                        <Setter Property="BorderThickness" Value="1.5"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                <Setter Property="Background" Value="#FFE8F4"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick"
+                                                  Command="{Binding DataContext.SelectPresetCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  CommandParameter="{Binding}"/>
+                                </Border.InputBindings>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Definition.Icon}" FontSize="22" Margin="0,0,0,6"
+                                               FontFamily="Segoe MDL2 Assets"/>
+                                    <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{StaticResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding Definition.Tagline}" Style="{StaticResource Caption}"
+                                               TextWrapping="Wrap" Margin="0,4,0,0"/>
                                 </StackPanel>
-                            </ToolTip>
-                        </Border.ToolTip>
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background"      Value="{StaticResource SurfaceBrush}"/>
-                                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
-                                <Setter Property="BorderThickness" Value="1.5"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-                                        <Setter Property="Background"  Value="#FFE8F4"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Border.InputBindings>
-                            <MouseBinding MouseAction="LeftClick"
-                                          Command="{Binding DataContext.SelectPresetCommand,
-                                              RelativeSource={RelativeSource AncestorType=Window}}"
-                                          CommandParameter="{Binding}"/>
-                        </Border.InputBindings>
-                        <StackPanel>
-                            <TextBlock Text="{Binding Definition.Icon}" FontSize="22" Margin="0,0,0,6"
-                                       FontFamily="Segoe MDL2 Assets"/>
-                            <TextBlock Text="{Binding Definition.Name}" FontWeight="SemiBold" FontSize="13"
-                                       Foreground="{StaticResource AccentBrush}"/>
-                            <TextBlock Text="{Binding Definition.Tagline}" Style="{StaticResource Caption}"
-                                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12">
+                    <Button Content="Start Build"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding RunCommand}"
+                            MinWidth="120"
+                            Margin="0,0,10,0"/>
+                    <Button Content="Cancel"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding CancelCommand}"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"
+                            MinWidth="80"/>
+                </StackPanel>
+
+                <Border Grid.Row="4"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="16,14">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                            <TextBlock Text="Live activity"
+                                       Style="{StaticResource H2}"
+                                       FontSize="12"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding StatusText}"
+                                       Style="{StaticResource Caption}"
+                                       TextWrapping="Wrap"/>
                         </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-            </ItemsControl>
 
-        <!-- ══ Action buttons ════════════════════════════════════════════════ -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12">
-            <Button Content="Start Build"
-                    Style="{StaticResource PrimaryButton}"
-                    Command="{Binding RunCommand}"
-                    MinWidth="120" Margin="0,0,10,0"/>
-            <Button Content="Cancel"
-                    Style="{StaticResource SecondaryButton}"
-                    Command="{Binding CancelCommand}"
-                    Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"
-                    MinWidth="80"/>
-        </StackPanel>
+                        <ListBox x:Name="ActivityList"
+                                 Grid.Row="1"
+                                 ItemsSource="{Binding Activities}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 HorizontalContentAlignment="Stretch">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,0,0,12"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Focusable" Value="False"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ActivityItemViewModel}">
+                                    <Border Background="#66FFFFFF"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Message}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextPrimaryBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                                <Setter Property="Foreground" Value="#B42318"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
 
-        <!-- ══ Status + progress ═════════════════════════════════════════════ -->
-        <StackPanel Grid.Row="4" Margin="0,0,0,8">
-            <TextBlock Text="{Binding StatusText}"
-                       FontSize="12"
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       Margin="0,0,0,4"/>
-            <ProgressBar Value="{Binding Progress, Mode=OneWay}"
-                         Minimum="0" Maximum="100"
-                         Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
-        </StackPanel>
-
-        <!-- ══ Log output ════════════════════════════════════════════════════ -->
-        <TextBox Grid.Row="5"
-                 Style="{StaticResource LogBox}"
-                 Text="{Binding Log, Mode=OneWay}"
-                 VerticalScrollBarVisibility="Auto"
-                 HorizontalScrollBarVisibility="Auto"/>
-    </Grid>
+                                            <ProgressBar IsIndeterminate="True"
+                                                         Height="5"
+                                                         Margin="0,10,0,0"
+                                                         Visibility="{Binding IsActive, Converter={StaticResource BoolVis}}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -63,7 +64,7 @@ namespace Cleanse10.ViewModels
         public string MountPath
         {
             get => _mountPath;
-            set { SetField(ref _mountPath, value); RaiseCanExecute(); }
+            private set { SetField(ref _mountPath, value); RaiseCanExecute(); }
         }
 
         public string OutputIso
@@ -115,6 +116,8 @@ namespace Cleanse10.ViewModels
             private set => SetField(ref _log, value);
         }
 
+        public ObservableCollection<ActivityItemViewModel> Activities { get; } = [];
+
         // Preset card view models for the UI to bind to
         public List<PresetCardViewModel> Presets { get; }
 
@@ -124,7 +127,7 @@ namespace Cleanse10.ViewModels
 
         public ICommand BrowseWimCommand   { get; }
         public ICommand BrowseIsoCommand   { get; }
-        public ICommand BrowseMountCommand { get; }
+        public ICommand OpenSettingsCommand { get; }
         public ICommand BrowseOutputCommand { get; }
         public ICommand RunCommand         { get; }
         public ICommand CancelCommand      { get; }
@@ -138,6 +141,8 @@ namespace Cleanse10.ViewModels
         private CancellationTokenSource? _cts;
         private readonly AppSettings _settings;
         private readonly StringBuilder _logBuilder = new();
+        private ActivityItemViewModel? _activeActivity;
+        private string? _activeMountSessionPath;
 
         // ──────────────────────────────────────────────────────────────────────
         // Constructor
@@ -147,7 +152,7 @@ namespace Cleanse10.ViewModels
         {
             _settings  = AppSettings.Load();
             _wimPath   = _settings.LastWimPath;
-            _mountPath = _settings.LastMountPath;
+            _mountPath = ResolveMountRoot(_settings.TempMountRoot);
             _outputIso = _settings.LastOutputPath;
 
             // Build card VMs from catalog
@@ -157,7 +162,7 @@ namespace Cleanse10.ViewModels
 
             BrowseWimCommand    = new RelayCommand(BrowseWim);
             BrowseIsoCommand    = new RelayCommand(BrowseIso);
-            BrowseMountCommand  = new RelayCommand(BrowseMount);
+            OpenSettingsCommand = new RelayCommand(OpenSettings);
             BrowseOutputCommand = new RelayCommand(BrowseOutput);
             SelectPresetCommand = new RelayCommand<PresetCardViewModel>(card => SelectedPreset = card.Definition.Preset);
             GetIsoCommand = new RelayCommand(OpenGetIsoWindow);
@@ -260,14 +265,20 @@ namespace Cleanse10.ViewModels
             }
         }
 
-        private void BrowseMount()
+        private void OpenSettings()
         {
-            var dlg = new Microsoft.Win32.OpenFolderDialog
+            var dialogVm = new SettingsViewModel(MountPath, GetDefaultMountRoot());
+            var dialog = new Views.SettingsDialog(dialogVm)
             {
-                Title = "Select an empty folder to use as the mount point",
+                Owner = System.Windows.Application.Current.MainWindow,
             };
-            if (dlg.ShowDialog() == true)
-                MountPath = dlg.FolderName;
+
+            if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialogVm.ResultMountRoot))
+                return;
+
+            MountPath = dialogVm.ResultMountRoot;
+            _settings.TempMountRoot = MountPath;
+            _settings.Save();
         }
 
         private void BrowseOutput()
@@ -288,23 +299,11 @@ namespace Cleanse10.ViewModels
         private bool CanRun() =>
             !IsBusy &&
             !string.IsNullOrWhiteSpace(WimPath)    && File.Exists(WimPath) &&
-            !string.IsNullOrWhiteSpace(MountPath)  && Directory.Exists(MountPath) &&
+            !string.IsNullOrWhiteSpace(MountPath) &&
             SelectedPreset.HasValue;
 
         private async Task RunAsync()
         {
-            // DISM /Mount-Wim requires the target directory to be completely empty.
-            // Catch this early and show a clear message rather than letting DISM exit with code 13.
-            if (Directory.EnumerateFileSystemEntries(MountPath).Any())
-            {
-                System.Windows.MessageBox.Show(
-                    $"The mount directory must be empty before mounting a WIM.\n\n{MountPath}\n\nPlease select (or create) an empty folder and try again.",
-                    "Mount Directory Not Empty",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
-                return;
-            }
-
             // ── Show pre-build options dialog ────────────────────────────────
             var presetDef = PresetCatalog.Get(SelectedPreset!.Value);
             var dialogVm  = new BuildOptionsViewModel(presetDef);
@@ -320,18 +319,21 @@ namespace Cleanse10.ViewModels
 
             IsBusy   = true;
             Progress = 0;
+            Activities.Clear();
             _logBuilder.Clear();
             Log = string.Empty;
+            _activeActivity = null;
 
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
+            string mountPath = CreateMountSessionPath();
+            _activeMountSessionPath = mountPath;
 
             IProgress<string> reporter = new Progress<string>(msg =>
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    _logBuilder.AppendLine(msg);
-                    Log = _logBuilder.ToString();
+                    HandleActivityMessage(msg);
                 });
             });
 
@@ -339,14 +341,17 @@ namespace Cleanse10.ViewModels
             {
                 // Save settings
                 _settings.LastWimPath    = WimPath;
-                _settings.LastMountPath  = MountPath;
+                _settings.LastMountPath  = mountPath;
                 _settings.LastOutputPath = OutputIso;
+                _settings.TempMountRoot  = MountPath;
                 _settings.Save();
+
+                StatusText = "Preparing build workspace...";
+                AddActivity($"Using temporary mount folder: {mountPath}");
 
                 StatusText = "Mounting WIM…";
                 var wim = new WimManager();
-                await wim.MountAsync(WimPath, WimIndex, MountPath, reporter, ct);
-                Progress = 15;
+                await wim.MountAsync(WimPath, WimIndex, mountPath, reporter, ct);
 
                 StatusText = $"Running preset {SelectedPreset!.Value}…";
 
@@ -366,18 +371,16 @@ namespace Cleanse10.ViewModels
                     }
                     : null;
 
-                var runner = new PresetRunner10(MountPath, SelectedPreset!.Value)
+                var runner = new PresetRunner10(mountPath, SelectedPreset!.Value)
                 {
                     UnattendedConfig = unattendedCfg,
                     DriverFolder     = string.IsNullOrWhiteSpace(options.DriverFolder) ? null : options.DriverFolder,
                 };
 
                 await runner.RunAsync(reporter, ct);
-                Progress = 80;
 
                 StatusText = "Saving and unmounting…";
-                await wim.UnmountAsync(MountPath, commit: true, reporter, ct);
-                Progress = 90;
+                await wim.UnmountAsync(mountPath, commit: true, reporter, ct);
 
                 if (!string.IsNullOrWhiteSpace(OutputIso))
                 {
@@ -385,7 +388,7 @@ namespace Cleanse10.ViewModels
                     // to reach the ISO root directory that contains boot\, efi\, sources\, etc.
                     string? wimDir    = Path.GetDirectoryName(WimPath);
                     string  isoSource = (wimDir != null ? Path.GetDirectoryName(wimDir) : null)
-                                        ?? MountPath;
+                                        ?? mountPath;
 
                     // Write autounattend.xml at the ISO root for a fully unattended install.
                     // This is separate from the Windows\Panther\unattend.xml already written
@@ -404,19 +407,19 @@ namespace Cleanse10.ViewModels
                     await builder.BuildAsync(isoSource, OutputIso, reporter, ct);
                 }
 
-                Progress   = 100;
                 StatusText = "Done!";
-                reporter.Report("[Cleanse10] All done. Your image is ready.");
+                AddActivity("Your image is ready.");
+                CompleteActiveActivity();
             }
             catch (OperationCanceledException)
             {
                 StatusText = "Cancelled.";
-                reporter.Report("[Cleanse10] Operation cancelled by user.");
+                AddActivity("Operation cancelled.", isError: true);
                 // Best-effort unmount without commit
                 try
                 {
                     var wim = new WimManager();
-                    await wim.UnmountAsync(MountPath, commit: false, reporter, CancellationToken.None);
+                    await wim.UnmountAsync(mountPath, commit: false, reporter, CancellationToken.None);
                 }
                 catch { /* ignore */ }
             }
@@ -429,7 +432,7 @@ namespace Cleanse10.ViewModels
                 try
                 {
                     var wim = new WimManager();
-                    await wim.UnmountAsync(MountPath, commit: false, reporter, CancellationToken.None);
+                    await wim.UnmountAsync(mountPath, commit: false, reporter, CancellationToken.None);
                 }
                 catch { /* best effort */ }
                 System.Windows.MessageBox.Show(ex.Message, "Cleanse10 — Error",
@@ -437,9 +440,12 @@ namespace Cleanse10.ViewModels
             }
             finally
             {
+                CompleteActiveActivity();
                 IsBusy = false;
                 _cts?.Dispose();
                 _cts = null;
+                CleanupMountSession();
+                _activeMountSessionPath = null;
             }
         }
 
@@ -449,6 +455,86 @@ namespace Cleanse10.ViewModels
         {
             (RunCommand    as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private static string GetDefaultMountRoot()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Cleanse10",
+                "Mounts");
+        }
+
+        private static string ResolveMountRoot(string? configuredMountRoot)
+        {
+            return string.IsNullOrWhiteSpace(configuredMountRoot)
+                ? GetDefaultMountRoot()
+                : configuredMountRoot.Trim();
+        }
+
+        private string CreateMountSessionPath()
+        {
+            Directory.CreateDirectory(MountPath);
+            return Path.Combine(MountPath, $"session-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}");
+        }
+
+        private void CleanupMountSession()
+        {
+            if (string.IsNullOrWhiteSpace(_activeMountSessionPath) || !Directory.Exists(_activeMountSessionPath))
+                return;
+
+            try
+            {
+                Directory.Delete(_activeMountSessionPath, recursive: true);
+            }
+            catch
+            {
+                // best effort
+            }
+        }
+
+        private void HandleActivityMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            StatusText = message;
+
+            if (!message.StartsWith("[", StringComparison.Ordinal))
+                return;
+
+            AddActivity(message, isError: message.StartsWith("[ERR]", StringComparison.OrdinalIgnoreCase) ||
+                                         message.StartsWith("[ERROR]", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void AddActivity(string message, bool isError = false)
+        {
+            if (_activeActivity != null && string.Equals(_activeActivity.Message, message, StringComparison.Ordinal))
+            {
+                _activeActivity.IsError = isError;
+                return;
+            }
+
+            CompleteActiveActivity();
+
+            var item = new ActivityItemViewModel(message)
+            {
+                IsActive = true,
+                IsError = isError,
+            };
+
+            Activities.Add(item);
+            _activeActivity = item;
+        }
+
+        private void CompleteActiveActivity()
+        {
+            if (_activeActivity == null)
+                return;
+
+            _activeActivity.IsActive = false;
+            _activeActivity.IsCompleted = true;
+            _activeActivity = null;
         }
     }
 

@@ -1,106 +1,144 @@
 <Window x:Class="Cleanse10.Views.BuildOptionsDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:cv="clr-namespace:Cleanse10.Converters"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Start Build"
         Width="480" SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BackgroundBrush}">
+        WindowStyle="None"
+        Background="Transparent">
 
-    <StackPanel Margin="28,22,28,26">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
 
-        <!-- ══ Preset header ════════════════════════════════════════════════════ -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-            <TextBlock Text="{Binding PresetIcon}"
-                       FontFamily="Segoe MDL2 Assets"
-                       FontSize="22"
-                       Foreground="{StaticResource AccentBrush}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,10,0"/>
-            <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="{Binding PresetName}"
-                           Style="{StaticResource H1}" FontSize="20" Margin="0"/>
-                <TextBlock Text="{Binding PresetTagline}"
-                           Style="{StaticResource Caption}" FontSize="12"/>
+    <Border Background="{StaticResource BackgroundBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Height="44">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Margin="16,0,0,0"
+                               VerticalAlignment="Center"
+                               Text="Build options"
+                               Style="{StaticResource H2}"/>
+
+                    <Button Grid.Column="1"
+                            Width="44"
+                            Height="44"
+                            Content="&#xE711;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Style="{StaticResource TitleBarButton}"
+                            Click="CloseButton_Click"/>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="28,22,28,26">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="{Binding PresetIcon}"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="22"
+                               Foreground="{StaticResource AccentBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding PresetName}"
+                                   Style="{StaticResource H1}" FontSize="20" Margin="0"/>
+                        <TextBlock Text="{Binding PresetTagline}"
+                                   Style="{StaticResource Caption}" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Separator Background="{StaticResource BorderBrush}" Margin="0,10,0,20"/>
+
+                <TextBlock Text="Computer name" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,4"/>
+                <TextBlock Text="Leave blank to auto-generate a random name."
+                           Style="{StaticResource Caption}" Margin="0,0,0,20"/>
+
+                <CheckBox IsChecked="{Binding AfkInstall}"
+                          Margin="0,0,0,6"
+                          Cursor="Hand">
+                    <StackPanel>
+                        <TextBlock Text="AFK Install"
+                                   FontWeight="SemiBold" FontSize="13"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Skip OOBE, accept EULA automatically. Requires an admin account below."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </CheckBox>
+
+                <Border Margin="0,8,0,20"
+                        Padding="14,12"
+                        CornerRadius="6"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        Visibility="{Binding AdminSectionVisible, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Admin account"
+                                   Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,12"/>
+
+                        <TextBlock Text="Username" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding AdminUsername, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,10"/>
+
+                        <TextBlock Text="Password" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding AdminPassword, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="Driver folder (optional)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{Binding DriverFolder, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="True"
+                             Margin="0,0,8,0"/>
+                    <Button Grid.Column="1"
+                            Content="Browse..."
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding BrowseDriversCommand}"
+                            MinWidth="80"/>
+                </Grid>
+                <TextBlock Text="Folder containing .inf files to inject into the offline image."
+                           Style="{StaticResource Caption}" Margin="0,0,0,20"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding CancelCommand}"
+                            MinWidth="80"
+                            Margin="0,0,10,0"/>
+                    <Button Content="Start Build"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding ConfirmCommand}"
+                            MinWidth="120"/>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
-
-        <Separator Background="{StaticResource BorderBrush}" Margin="0,10,0,20"/>
-
-        <!-- ══ Hostname ══════════════════════════════════════════════════════════ -->
-        <TextBlock Text="Computer name" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-        <TextBox Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,0,0,4"/>
-        <TextBlock Text="Leave blank to auto-generate a random name."
-                   Style="{StaticResource Caption}" Margin="0,0,0,20"/>
-
-        <!-- ══ AFK Install ════════════════════════════════════════════════════════ -->
-        <CheckBox IsChecked="{Binding AfkInstall}"
-                  Margin="0,0,0,6"
-                  Cursor="Hand">
-            <StackPanel>
-                <TextBlock Text="AFK Install"
-                           FontWeight="SemiBold" FontSize="13"
-                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Skip OOBE, accept EULA automatically. Requires an admin account below."
-                           Style="{StaticResource Caption}" TextWrapping="Wrap"/>
-            </StackPanel>
-        </CheckBox>
-
-        <!-- ══ Admin account (shown when AFK is checked) ════════════════════════ -->
-        <Border Margin="0,8,0,20"
-                Padding="14,12"
-                CornerRadius="6"
-                Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1"
-                Visibility="{Binding AdminSectionVisible, Converter={StaticResource BoolVis}}">
-            <StackPanel>
-                <TextBlock Text="Admin account"
-                           Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,12"/>
-
-                <TextBlock Text="Username" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding AdminUsername, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,0,0,10"/>
-
-                <TextBlock Text="Password" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding AdminPassword, UpdateSourceTrigger=PropertyChanged}"/>
-            </StackPanel>
-        </Border>
-
-        <!-- ══ Driver folder ══════════════════════════════════════════════════════ -->
-        <TextBlock Text="Driver folder (optional)" Style="{StaticResource H2}" FontSize="12" Margin="0,0,0,4"/>
-        <Grid Margin="0,0,0,4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0"
-                     Text="{Binding DriverFolder, UpdateSourceTrigger=PropertyChanged}"
-                     IsReadOnly="True"
-                     Margin="0,0,8,0"/>
-            <Button Grid.Column="1"
-                    Content="Browse…"
-                    Style="{StaticResource SecondaryButton}"
-                    Command="{Binding BrowseDriversCommand}"
-                    MinWidth="80"/>
         </Grid>
-        <TextBlock Text="Folder containing .inf files to inject into the offline image."
-                   Style="{StaticResource Caption}" Margin="0,0,0,20"/>
-
-        <!-- ══ Action buttons ════════════════════════════════════════════════════ -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancel"
-                    Style="{StaticResource SecondaryButton}"
-                    Command="{Binding CancelCommand}"
-                    MinWidth="80"
-                    Margin="0,0,10,0"/>
-            <Button Content="Start Build"
-                    Style="{StaticResource PrimaryButton}"
-                    Command="{Binding ConfirmCommand}"
-                    MinWidth="120"/>
-        </StackPanel>
-
-    </StackPanel>
+    </Border>
 </Window>
